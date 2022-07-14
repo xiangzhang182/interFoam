@@ -1,0 +1,105 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1912                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      alpha.oil;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    SideWalls
+    {
+        type            zeroGradient;
+    }
+
+    BottomWall
+    {
+        type            codedFixedValue;
+		value           uniform 1;
+
+		// Name of generated boundary condition
+		name    alphaInjection;
+
+		code
+		#{
+			const scalar t = this->db().time().value();
+			
+			const scalar Period = 0.015;
+			const scalar InjectionTime = 0.002;
+			
+			//Bubble size
+			const scalar D      = 0.001;
+			
+			//Define locations for injection
+			const label N_inj = 2;
+			vector pt_Inj[N_inj];
+			pt_Inj[0] = vector(0.0075,0,0);
+			pt_Inj[1] = vector(0.0125,0,0);
+			
+			
+			const fvPatch& boundaryPatch = patch();
+			const vectorField& Cf = boundaryPatch.Cf();
+			scalarField& a = *this;
+			
+			//const fvPatch& boundaryPatch = patch();
+			volScalarField& a_Int = this->db().lookupObjectRef<volScalarField>("alpha.oil");
+			const labelList& a_Cells = this->patch().faceCells();
+			
+			//scalarField& a_int = this->patchInternalField()();
+			
+			//Time since start of injection cycle
+			const scalar t_cycle = fmod(t, Period);
+			
+			forAll(Cf, f)
+			{
+				a[f] = 1; 
+				a_Int[a_Cells[f]] = 1;
+				
+				//Bubble being injected
+				if (t_cycle < InjectionTime)
+				{
+					const scalar D_base = D*sin( (t_cycle/InjectionTime)*M_PI );
+					const scalar x = Cf[f].x();
+					
+					for (int j = 0; j < N_inj; j++)
+					{
+						//Inside injection portion of bubble
+						if ( pow( (x-pt_Inj[j].x()), 2) <= pow( (D_base/2.0), 2) )
+						{ 
+							a[f] = 0;
+							a_Int[a_Cells[f]] = 0;
+						}
+					}
+				
+				}
+			}
+		#};
+    }
+
+    Atmosphere
+    {
+        type            inletOutlet;
+        inletValue      uniform 0;
+        value           uniform 0;
+    }
+
+    FrontNBack
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //

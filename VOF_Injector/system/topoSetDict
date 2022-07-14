@@ -1,0 +1,95 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1912                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      topoSetDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+actions
+(
+    {
+        name    s1;
+        type    faceSet;
+        action  new;
+        source  patchToFace;
+        sourceInfo
+	    {
+       	    patch     "BottomWall";
+    	}
+    }
+
+    {
+        name    s1;
+        type    faceSet;
+        action  subset;
+        source  cylinderToFace;
+        sourceInfo
+	    {
+//       	    set s1;
+       	    p1       (0.020 0.020  -1);    // start point on cylinder axis
+       	    p2       (0.020 0.020  1);    // end point on cylinder axis
+       	    radius   0.0127;
+    	}
+    }
+
+/*
+
+    // Get all faces in cellSet
+    {
+        name    inlet1;
+        type    faceSet;
+        action  new;
+        source  cellToFace;
+        sourceInfo
+        {
+            set     i1;
+            option  all;
+        }
+    }
+    {
+        name   inlet1;
+        type   faceSet;
+        action subset;
+        source patchToFace;
+        sourceInfo
+        {
+            name "walls";
+        }
+    }
+
+    {
+        name i1;
+        type cellSet;
+        action remove;
+    }
+
+
+/*
+    {
+        name    wallFilmFaceSet;
+        type    faceSet;
+        action  new;
+        source  patchToFace;
+        patch   filmWalls;
+    }
+    {
+        name    wallFilmFaces;
+        type    faceZoneSet;
+        action  new;
+        source  setToFaceZone;
+        faceSet wallFilmFaceSet;
+    }
+*/
+);
+
+// ************************************************************************* //
